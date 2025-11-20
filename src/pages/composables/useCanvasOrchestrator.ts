@@ -1,4 +1,3 @@
-import { ref, onMounted, onUnmounted, nextTick, shallowRef } from 'vue'
 import { RenderOrchestrator } from '../../canvas/core/RenderOrchestrator'
 
 /**
@@ -21,6 +20,8 @@ export function useCanvasOrchestrator() {
         if (rect.width < 10 || rect.height < 10) return
         orchestrator.resize(rect.width, rect.height)
     }
+
+    let resizeObserver: ResizeObserver | null = null
 
     onMounted(async () => {
         if (!pixiCanvasRef.value || !canvas2DRef.value || !domOverlayRef.value || !containerRef.value) return
@@ -47,18 +48,18 @@ export function useCanvasOrchestrator() {
 
         window.addEventListener('resize', handleResize)
 
-        const resizeObserver = new ResizeObserver(() => {
+        resizeObserver = new ResizeObserver(() => {
             setTimeout(() => nextTick(handleResize), 50)
         })
         resizeObserver.observe(containerRef.value)
 
         //isReady.value = true
+    })
 
-        onUnmounted(() => {
-            resizeObserver.disconnect()
-            window.removeEventListener('resize', handleResize)
-            orchestrator?.destroy()
-        })
+    onUnmounted(() => {
+        resizeObserver?.disconnect()
+        window.removeEventListener('resize', handleResize)
+        orchestrator?.destroy()
     })
 
     return {

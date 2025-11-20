@@ -1,4 +1,3 @@
-import type { Ref } from 'vue'
 import type { RenderOrchestrator } from '../../canvas/core/RenderOrchestrator'
 import type { PointerEvent as ToolPointerEvent } from '../../types/tool'
 

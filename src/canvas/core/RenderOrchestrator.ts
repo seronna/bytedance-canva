@@ -126,10 +126,16 @@ export class RenderOrchestrator {
         return this.toolManager
     }
 
+    /**
+     * 设置当前图形样式
+     */
     public setShapeStyle(style: Partial<ShapeStyle>) {
         this.currentShapeStyle = { ...this.currentShapeStyle, ...style }
     }
 
+    /**
+     * 获取当前图形样式
+     */
     public getShapeStyle(): ShapeStyle {
         return { ...this.currentShapeStyle }
     }
