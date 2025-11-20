@@ -9,6 +9,18 @@
         <input type="color" v-model="fillColorHex" class="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent" />
         <span class="text-xs text-gray-600 font-mono">{{ fillColorHex.toUpperCase() }}</span>
       </div>
+      <!-- 预定义颜色 -->
+      <div class="grid grid-cols-6 gap-1.5">
+        <button
+          v-for="color in presetColors"
+          :key="color"
+          @click="fillColorHex = color"
+          :style="{ backgroundColor: color }"
+          class="w-5 h-5 rounded border-2 transition-all hover:scale-110"
+          :class="fillColorHex.toLowerCase() === color.toLowerCase() ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'"
+          :title="color"
+        />
+      </div>
     </div>
 
     <!-- 描边颜色 -->
@@ -17,6 +29,18 @@
       <div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-100">
         <input type="color" v-model="strokeColorHex" class="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent" />
         <span class="text-xs text-gray-600 font-mono">{{ strokeColorHex.toUpperCase() }}</span>
+      </div>
+      <!-- 预定义颜色 -->
+      <div class="grid grid-cols-6 gap-1.5">
+        <button
+          v-for="color in presetColors"
+          :key="color"
+          @click="strokeColorHex = color"
+          :style="{ backgroundColor: color }"
+          class="w-5 h-5 rounded border-2 transition-all hover:scale-110"
+          :class="strokeColorHex.toLowerCase() === color.toLowerCase() ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'"
+          :title="color"
+        />
       </div>
     </div>
 
@@ -45,6 +69,11 @@ import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
 const props = defineProps<{
   orchestrator: RenderOrchestrator
 }>()
+
+// 预定义颜色选项
+const presetColors = [
+  '#000000', '#FFFFFF', '#3b82f6', '#C0C0C0', '#FF0000', '#800000',
+]
 
 // 辅助函数：数字颜色转 Hex 字符串
 const numberToHex = (num: number) => '#' + num.toString(16).padStart(6, '0')
