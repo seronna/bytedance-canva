@@ -24,6 +24,9 @@ export class PixiManager {
     // 控制图形交互是否启用
     private interactionEnabled = true
 
+    // 选中变化监听器
+    private selectionListeners: Array<(selectedIds: string[]) => void> = []
+
     /**
      * 初始化 Pixi Application
      */
@@ -95,7 +98,7 @@ export class PixiManager {
         console.log(`[PixiManager] 图形交互 ${enabled ? '启用' : '禁用'}`)
     }
 
-    addRect(x: number, y: number, width: number, height: number, color: number): string {
+    addRect(x: number, y: number, width: number, height: number, style: { fillColor: number, strokeColor: number, strokeWidth: number }): string {
         const id = `shape_${this.nextShapeId++}`
         const rect = new RectNode({
             id,
@@ -104,9 +107,9 @@ export class PixiManager {
             y,
             width,
             height,
-            color,
-            borderColor: 0x000000,
-            borderWidth: 1
+            color: style.fillColor,
+            borderColor: style.strokeColor,
+            borderWidth: style.strokeWidth
         })
 
         this.shapes.set(id, rect)
@@ -119,7 +122,7 @@ export class PixiManager {
         return id
     }
 
-    addCircle(x: number, y: number, radius: number, color: number): string {
+    addCircle(x: number, y: number, radius: number, style: { fillColor: number, strokeColor: number, strokeWidth: number }): string {
         const id = `shape_${this.nextShapeId++}`
         const circle = new CircleNode({
             id,
@@ -127,9 +130,9 @@ export class PixiManager {
             x,
             y,
             radius,
-            color,
-            borderColor: 0x000000,
-            borderWidth: 1
+            color: style.fillColor,
+            borderColor: style.strokeColor,
+            borderWidth: style.strokeWidth
         })
 
         this.shapes.set(id, circle)
@@ -191,6 +194,9 @@ export class PixiManager {
                     worldX - this.dragOffset.x,
                     worldY - this.dragOffset.y
                 )
+
+                // 通知选中监听器更新（包括选择框）
+                this.notifySelectionChange()
             }
         })
     }
@@ -202,6 +208,7 @@ export class PixiManager {
         if (shape) {
             shape.setSelected(true)
         }
+        this.notifySelectionChange()
         console.log('[PixiManager] 选中图形:', id)
     }
 
@@ -213,6 +220,25 @@ export class PixiManager {
             }
         })
         this.selectedShapeIds.clear()
+        this.notifySelectionChange()
+    }
+
+    /**
+     * 订阅选中变化
+     */
+    onSelectionChange(listener: (selectedIds: string[]) => void): () => void {
+        this.selectionListeners.push(listener)
+        return () => {
+            const index = this.selectionListeners.indexOf(listener)
+            if (index > -1) {
+                this.selectionListeners.splice(index, 1)
+            }
+        }
+    }
+
+    private notifySelectionChange(): void {
+        const ids = Array.from(this.selectedShapeIds)
+        this.selectionListeners.forEach(listener => listener(ids))
     }
 
     hitTest(screenX: number, screenY: number, viewport: ViewportState): string | null {

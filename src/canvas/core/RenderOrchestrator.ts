@@ -8,18 +8,43 @@ import { CanvasManager } from './CanvasManager'
 import { DOMManager } from './DOMManager'
 import { Viewport } from './Viewport'
 import type { ViewportState } from './Viewport'
+import { ToolManager, SelectTool, PanTool, RectTool, CircleTool } from '@/canvas-tools'
+
+
+export interface ShapeStyle {
+    fillColor: number
+    strokeColor: number
+    strokeWidth: number
+}
 
 export class RenderOrchestrator {
     private pixiManager: PixiManager
     private canvasManager: CanvasManager
     private domManager: DOMManager
     private viewport: Viewport
+    private toolManager: ToolManager
+
+    private currentShapeStyle: ShapeStyle = {
+        fillColor: 0x3b82f6,
+        strokeColor: 0x000000,
+        strokeWidth: 1
+    }
 
     constructor() {
         this.pixiManager = new PixiManager()
         this.canvasManager = new CanvasManager()
         this.domManager = new DOMManager()
         this.viewport = new Viewport()
+        this.toolManager = new ToolManager()
+
+        // 注册所有工具
+        this.toolManager.register(new SelectTool(this))
+        this.toolManager.register(new PanTool(this))
+        this.toolManager.register(new RectTool(this))
+        this.toolManager.register(new CircleTool(this))
+
+        // 默认激活选择工具
+        this.toolManager.setActiveTool('select')
 
         // 监听 Viewport 变化，同步到三层
         this.viewport.onChange((state) => {
@@ -92,6 +117,21 @@ export class RenderOrchestrator {
      */
     getDOMManager(): DOMManager {
         return this.domManager
+    }
+
+    /**
+     * 获取工具管理器
+     */
+    getToolManager(): ToolManager {
+        return this.toolManager
+    }
+
+    public setShapeStyle(style: Partial<ShapeStyle>) {
+        this.currentShapeStyle = { ...this.currentShapeStyle, ...style }
+    }
+
+    public getShapeStyle(): ShapeStyle {
+        return { ...this.currentShapeStyle }
     }
 
     /**

@@ -5,10 +5,28 @@
 
 import { Graphics } from 'pixi.js'
 
-// 导出接口
+/**
+ * 图形数据接口
+ * 包括图形的基本属性，如位置、尺寸、颜色等
+ * @param id 图形唯一标识符
+ * @param type 图形类型（矩形、圆形等）
+ * @param x 图形位置 X
+ * @param y 图形位置 Y
+ * @param width 图形宽度（可选，适用于矩形等）
+ * @param height 图形高度（可选，适用于矩形等）
+ * @param radius 图形半径（可选，适用于圆形等）
+ * @param color 填充颜色
+ * @param borderColor 边框颜色（可选）
+ * @param borderWidth 边框宽度（可选）
+ * @param text 文本内容（可选，适用于文本图形）
+ * @param fontSize 字体大小（可选，适用于文本图形）
+ * @param rotation 旋转角度（可选）
+ * @param draggable 是否可拖拽（可选）
+ * @param selectable 是否可选中（可选）
+ */
 export interface ShapeData {
     id: string
-    type: 'rect' | 'circle' | 'ellipse' | 'line' | 'text'
+    type: 'rect' | 'circle' | 'ellipse' | 'line' | 'text' | 'image'
     x: number
     y: number
     width?: number
@@ -25,7 +43,12 @@ export interface ShapeData {
     selectable?: boolean
 }
 
-// 导出基类
+/**
+ * 图形对象基类
+ * 提供图形的基本属性和方法
+ * @param id 图形唯一标识符
+ * @param type 图形类型
+ */
 export abstract class ShapeBase {
     public id: string
     public type: ShapeData['type']
