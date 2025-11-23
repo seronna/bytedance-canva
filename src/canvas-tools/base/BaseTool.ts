@@ -27,8 +27,7 @@ export abstract class BaseTool implements ITool {
 
     // 默认实现（子类可覆盖）
     activate(): void {
-        // 默认：禁用图形交互
-        this.pixiManager.setInteractionEnabled(false)
+        // 默认：禁用图形交互（由具体工具决定是否启用）
     }
 
     deactivate(): void {

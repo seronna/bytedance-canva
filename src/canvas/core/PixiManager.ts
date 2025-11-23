@@ -1,6 +1,8 @@
 /**
  * PixiManager.ts - Pixi WebGL 渲染管理器
- * 职责：管理 Pixi Application、主场景容器、渲染循环、图形对象管理、拾取检测、拖拽
+ * 职责：管理 Pixi Application、主场景容器、图形渲染与生命周期
+ *
+ * 不负责：拖拽、选择等交互逻辑（由 Tool 层管理）
  */
 
 import type { ShapeBase, ShapeData } from '../objects/ShapeBase'
@@ -18,17 +20,7 @@ export class PixiManager {
 
     // 渲染缓存（仅用于渲染，数据持久化由 repository 负责）
     private shapes: Map<string, ShapeBase> = new Map()
-    private selectedShapeIds: Set<string> = new Set()
-
-    private draggingShape: ShapeBase | null = null
-    private dragOffset = { x: 0, y: 0 }
     private currentViewport: ViewportState = { x: 0, y: 0, scale: 1 }
-
-    // 控制图形交互是否启用
-    private interactionEnabled = true
-
-    // 选中变化监听器
-    private selectionListeners: Array<(selectedIds: string[]) => void> = []
 
     constructor(repository?: IShapeRepository) {
         // 默认使用 LocalRepository，但支持注入自定义实现（如 CRDTRepository）
@@ -82,6 +74,10 @@ export class PixiManager {
         return this.shapes.get(id) ?? null
     }
 
+    getAllShapes(): ShapeBase[] {
+        return Array.from(this.shapes.values())
+    }
+
     clear(): void {
         if (!this.mainContainer)
             return
@@ -95,18 +91,6 @@ export class PixiManager {
         }
         this.mainContainer = null
         console.log('[PixiManager] 已销毁')
-    }
-
-    /**
-     * 启用/禁用所有图形的交互
-     */
-    setInteractionEnabled(enabled: boolean): void {
-        this.interactionEnabled = enabled
-        this.shapes.forEach((shape) => {
-            shape.graphics.eventMode = enabled ? 'static' : 'none'
-            shape.graphics.cursor = enabled ? 'move' : 'default'
-        })
-        console.log(`[PixiManager] 图形交互 ${enabled ? '启用' : '禁用'}`)
     }
 
     /**
@@ -174,8 +158,6 @@ export class PixiManager {
         if (this.mainContainer) {
             this.mainContainer.addChild(shape.graphics)
         }
-
-        this.setupDragEvents(shape)
     }
 
     /**
@@ -203,103 +185,11 @@ export class PixiManager {
     /**
      * 屏幕坐标转世界坐标
      */
-    private screenToWorld(screenX: number, screenY: number): { x: number, y: number } {
+    screenToWorld(screenX: number, screenY: number): { x: number, y: number } {
         return {
             x: (screenX - this.currentViewport.x) / this.currentViewport.scale,
             y: (screenY - this.currentViewport.y) / this.currentViewport.scale,
         }
-    }
-
-    /**
-     * 设置拖拽事件
-     * @param shape 图形对象
-     */
-    private setupDragEvents(shape: ShapeBase): void {
-        const graphics = shape.graphics
-
-        // 根据当前交互状态设置
-        graphics.eventMode = this.interactionEnabled ? 'static' : 'none'
-        graphics.cursor = this.interactionEnabled ? 'move' : 'default'
-
-        graphics.on('pointerdown', (event) => {
-            if (!this.interactionEnabled)
-                return
-
-            this.selectShape(shape.id)
-            this.draggingShape = shape
-
-            const world = this.screenToWorld(event.global.x, event.global.y)
-            const shapePos = shape.getPosition()
-            this.dragOffset.x = world.x - shapePos.x
-            this.dragOffset.y = world.y - shapePos.y
-
-            graphics.cursor = 'grabbing'
-            event.stopPropagation()
-        })
-
-        // 拖拽结束处理（合并 pointerup 和 pointerupoutside）
-        const handleDragEnd = async () => {
-            if (!this.interactionEnabled)
-                return
-            if (this.draggingShape === shape) {
-                await this.updateShapeData(shape.id)
-            }
-            this.draggingShape = null
-            graphics.cursor = 'move'
-        }
-        graphics.on('pointerup', handleDragEnd)
-        graphics.on('pointerupoutside', handleDragEnd)
-
-        graphics.on('globalpointermove', (event) => {
-            if (!this.interactionEnabled || this.draggingShape !== shape)
-                return
-
-            const world = this.screenToWorld(event.global.x, event.global.y)
-            shape.setPosition(
-                world.x - this.dragOffset.x,
-                world.y - this.dragOffset.y,
-            )
-            this.notifySelectionChange()
-        })
-    }
-
-    selectShape(id: string): void {
-        this.clearSelection()
-        this.selectedShapeIds.add(id)
-        const shape = this.shapes.get(id)
-        if (shape) {
-            shape.setSelected(true)
-        }
-        this.notifySelectionChange()
-    }
-
-    clearSelection(): void {
-        this.selectedShapeIds.forEach((id) => {
-            const shape = this.shapes.get(id)
-            if (shape) {
-                shape.setSelected(false)
-            }
-        })
-        this.selectedShapeIds.clear()
-        this.notifySelectionChange()
-    }
-
-    /**
-     * 订阅选中变化
-     */
-    onSelectionChange(listener: (selectedIds: string[]) => void): () => void {
-        this.selectionListeners.push(listener)
-        return () => {
-            const index = this.selectionListeners.indexOf(listener)
-            if (index > -1) {
-                this.selectionListeners.splice(index, 1)
-            }
-        }
-    }
-
-    private notifySelectionChange(): void {
-        const ids = Array.from(this.selectedShapeIds)
-        this.selectionListeners.forEach(listener => listener(ids))
     }
 
     /**
