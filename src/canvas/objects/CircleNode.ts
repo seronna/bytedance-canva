@@ -2,7 +2,8 @@
  * CircleNode.ts - 圆形节点
  */
 
-import { ShapeBase, type ShapeData } from './ShapeBase'
+import type { ShapeData } from './ShapeBase'
+import { ShapeBase } from './ShapeBase'
 
 export class CircleNode extends ShapeBase {
     constructor(data: ShapeData) {

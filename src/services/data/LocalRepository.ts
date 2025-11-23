@@ -8,11 +8,8 @@ import type { ShapeData } from '@/canvas/objects/ShapeBase'
 import { nanoid } from 'nanoid'
 import { shallowRef } from 'vue'
 
-type SubscribeCallback = (shapes: ShapeData[]) => void
-
 export class LocalRepository implements IShapeRepository {
     private shapes = shallowRef<Record<string, ShapeData>>({})
-    private subscribers = new Set<SubscribeCallback>()
     private storageKey = 'canvas-shapes'
 
     constructor() {
@@ -51,20 +48,11 @@ export class LocalRepository implements IShapeRepository {
     }
 
     /**
-     * 通知所有订阅者
-     */
-    private notifySubscribers(): void {
-        const shapesArray = Object.values(this.shapes.value)
-        this.subscribers.forEach(callback => callback(shapesArray))
-    }
-
-    /**
      * 更新状态并持久化
      */
     private updateAndPersist(newShapes: Record<string, ShapeData>): void {
         this.shapes.value = newShapes
         this.saveToStorage()
-        this.notifySubscribers()
     }
 
     // ==================== IShapeRepository 接口实现 ====================
@@ -94,47 +82,13 @@ export class LocalRepository implements IShapeRepository {
         })
     }
 
-    async delete(id: string): Promise<void> {
-        const { [id]: _, ...rest } = this.shapes.value
-        this.updateAndPersist(rest)
-    }
-
-    async deleteMany(ids: string[]): Promise<void> {
-        const idsSet = new Set(ids)
-        const filtered = Object.fromEntries(
-            Object.entries(this.shapes.value).filter(([id]) => !idsSet.has(id)),
-        )
-        this.updateAndPersist(filtered)
-    }
-
-    async get(id: string): Promise<ShapeData | null> {
-        return this.shapes.value[id] || null
-    }
-
     async getAll(): Promise<ShapeData[]> {
         return Object.values(this.shapes.value)
     }
 
-    async queryByIds(ids: string[]): Promise<ShapeData[]> {
-        return ids
-            .map(id => this.shapes.value[id])
-            .filter((shape): shape is ShapeData => Boolean(shape))
-    }
-
-    subscribe(callback: SubscribeCallback): () => void {
-        this.subscribers.add(callback)
-
-        // 立即触发一次回调
-        callback(Object.values(this.shapes.value))
-
-        // 返回取消订阅函数
-        return () => {
-            this.subscribers.delete(callback)
-        }
-    }
-
-    async clear(): Promise<void> {
-        this.updateAndPersist({})
+    async delete(id: string): Promise<void> {
+        const { [id]: _, ...rest } = this.shapes.value
+        this.updateAndPersist(rest)
     }
 
     /**

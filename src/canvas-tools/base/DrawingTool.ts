@@ -43,7 +43,6 @@ export abstract class DrawingTool extends BaseTool {
         const shape = this.pixiManager.getShape(this.previewId)
         if (!shape)
             return
-
         this.updatePreview(shape, e)
     }
 
@@ -59,7 +58,7 @@ export abstract class DrawingTool extends BaseTool {
                 this.deletePreview(this.previewId)
             }
             else {
-                // 有效拖拽，保存最终的图形数据到 repository（异步，不阻塞 UI）
+                // 有效拖拽，保存最终的图形数据到 repository
                 const idToSave = this.previewId
                 this.pixiManager.updateShapeData(idToSave).catch((err) => {
                     console.error('保存图形数据失败:', err)
@@ -76,10 +75,12 @@ export abstract class DrawingTool extends BaseTool {
     protected abstract createPreview(e: PointerEvent): Promise<string>
 
     /**
-     * 删除预览图形（子类可覆盖）
+     * 删除预览图形
      */
-    protected deletePreview(_id: string): void {
-        // 子类实现删除逻辑
+    protected deletePreview(id: string): void {
+        this.pixiManager.deleteShape(id).catch((err) => {
+            console.error('删除预览图形失败:', err)
+        })
     }
 
     /**

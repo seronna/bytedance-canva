@@ -18,7 +18,7 @@ export class Viewport {
 
     // 最小/最大缩放限制
     private minScale = 0.1
-    private maxScale = 30
+    private maxScale = 5
 
     // 监听器列表
     private listeners: Array<(state: ViewportState) => void> = []
@@ -57,10 +57,11 @@ export class Viewport {
         const oldScale = this.state.scale
         const newScale = Math.max(
             this.minScale,
-            Math.min(this.maxScale, oldScale * (1 + delta))
+            Math.min(this.maxScale, oldScale * (1 + delta)),
         )
 
-        if (newScale === oldScale) return
+        if (newScale === oldScale)
+            return
 
         // 缩放时调整平移，使得 centerX/centerY 保持在屏幕同一位置
         // 公式：newPos = centerPos - (centerPos - oldPos) * (newScale / oldScale)
@@ -117,6 +118,6 @@ export class Viewport {
      * 通知所有监听器
      */
     private notifyListeners(): void {
-        this.listeners.forEach((listener) => listener(this.state))
+        this.listeners.forEach(listener => listener(this.state))
     }
 }

@@ -101,7 +101,7 @@ export abstract class ShapeBase {
     /**
      * 获取位置
      */
-    getPosition(): { x: number; y: number } {
+    getPosition(): { x: number, y: number } {
         return { x: this.data.x, y: this.data.y }
     }
 
@@ -110,32 +110,33 @@ export abstract class ShapeBase {
      */
     setSelected(selected: boolean): void {
         if (selected) {
-            this.graphics.tint = 0xaaccff
-        } else {
-            this.graphics.tint = 0xffffff
+            this.graphics.tint = 0xAACCFF
+        }
+        else {
+            this.graphics.tint = 0xFFFFFF
         }
     }
 
     /**
      * 获取边界框（用于碰撞检测）
      */
-    getBounds(): { x: number; y: number; width: number; height: number } {
+    getBounds(): { x: number, y: number, width: number, height: number } {
         const bounds = this.graphics.getBounds()
         return {
             x: bounds.x,
             y: bounds.y,
             width: bounds.width,
-            height: bounds.height
+            height: bounds.height,
         }
     }
 
     /**
-     * 点击测试
+     * 判断点是否在图形内部（碰撞检测）
      */
-    hitTest(x: number, y: number): boolean {
+    containsPoint(x: number, y: number): boolean {
         const bounds = this.getBounds()
-        return x >= bounds.x && x <= bounds.x + bounds.width &&
-            y >= bounds.y && y <= bounds.y + bounds.height
+        return x >= bounds.x && x <= bounds.x + bounds.width
+            && y >= bounds.y && y <= bounds.y + bounds.height
     }
 
     /**

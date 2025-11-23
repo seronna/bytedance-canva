@@ -2,7 +2,8 @@
  * RectNode.ts - 矩形节点
  */
 
-import { ShapeBase, type ShapeData } from './ShapeBase'
+import type { ShapeData } from './ShapeBase'
+import { ShapeBase } from './ShapeBase'
 
 export class RectNode extends ShapeBase {
     constructor(data: ShapeData) {

@@ -33,7 +33,6 @@ export class RectTool extends DrawingTool {
         const height = Math.abs(e.worldY - this.startY)
         const x = Math.min(e.worldX, this.startX)
         const y = Math.min(e.worldY, this.startY)
-
         shape.setPosition(x, y)
             ; (shape as RectNode).setSize(width, height)
     }

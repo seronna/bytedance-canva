@@ -9,7 +9,7 @@ import type { PointerEvent as ToolPointerEvent } from '../../types/tool'
  */
 export function useCanvasEvents(
     getOrchestrator: () => RenderOrchestrator | null,
-    containerRef: Ref<HTMLElement | null>
+    containerRef: Ref<HTMLElement | null>,
 ) {
     /**
      * 统一获取事件上下文和坐标
@@ -17,7 +17,8 @@ export function useCanvasEvents(
      */
     const createPointerEvent = (e: MouseEvent): ToolPointerEvent | null => {
         const orchestrator = getOrchestrator()
-        if (!orchestrator || !containerRef.value) return null
+        if (!orchestrator || !containerRef.value)
+            return null
 
         const rect = containerRef.value.getBoundingClientRect()
         const screenX = e.clientX - rect.left
@@ -37,7 +38,7 @@ export function useCanvasEvents(
             ctrlKey: e.ctrlKey,
             altKey: e.altKey,
             metaKey: e.metaKey,
-            button: e.button
+            button: e.button,
         }
     }
 
@@ -46,20 +47,12 @@ export function useCanvasEvents(
      */
     const handleMouseDown = (e: MouseEvent) => {
         const pointerEvent = createPointerEvent(e)
-        if (!pointerEvent) return
+        if (!pointerEvent)
+            return
 
         const orchestrator = getOrchestrator()
-        if (!orchestrator) return
-
-        // 特殊处理：Shift + 拖拽 = 强制平移
-        if (e.shiftKey) {
-            const toolManager = orchestrator.getToolManager()
-            const currentToolName = toolManager.getCurrentToolName()
-            // 临时切换到平移工具
-            if (currentToolName !== 'pan') {
-                toolManager.setActiveTool('pan')
-            }
-        }
+        if (!orchestrator)
+            return
 
         orchestrator.getToolManager().handlePointerDown(pointerEvent)
     }
@@ -69,10 +62,12 @@ export function useCanvasEvents(
      */
     const handleMouseMove = (e: MouseEvent) => {
         const pointerEvent = createPointerEvent(e)
-        if (!pointerEvent) return
+        if (!pointerEvent)
+            return
 
         const orchestrator = getOrchestrator()
-        if (!orchestrator) return
+        if (!orchestrator)
+            return
 
         orchestrator.getToolManager().handlePointerMove(pointerEvent)
     }
@@ -82,10 +77,12 @@ export function useCanvasEvents(
      */
     const handleMouseUp = (e: MouseEvent) => {
         const pointerEvent = createPointerEvent(e)
-        if (!pointerEvent) return
+        if (!pointerEvent)
+            return
 
         const orchestrator = getOrchestrator()
-        if (!orchestrator) return
+        if (!orchestrator)
+            return
 
         orchestrator.getToolManager().handlePointerUp(pointerEvent)
     }
@@ -95,7 +92,8 @@ export function useCanvasEvents(
      */
     const handleWheel = (e: WheelEvent) => {
         const orchestrator = getOrchestrator()
-        if (!orchestrator || !containerRef.value) return
+        if (!orchestrator || !containerRef.value)
+            return
 
         e.preventDefault()
         const rect = containerRef.value.getBoundingClientRect()
@@ -109,6 +107,6 @@ export function useCanvasEvents(
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
-        handleWheel
+        handleWheel,
     }
 }

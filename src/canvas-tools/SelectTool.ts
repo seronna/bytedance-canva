@@ -20,7 +20,7 @@ export class SelectTool extends BaseTool {
 
     override onPointerDown(e: PointerEvent): void {
         // 命中测试
-        const hitShapeId = this.pixiManager.hitTest(e.screenX, e.screenY)
+        const hitShapeId = this.pixiManager.getShapeAtPoint(e.screenX, e.screenY)
         if (hitShapeId) {
             this.pixiManager.selectShape(hitShapeId)
         }

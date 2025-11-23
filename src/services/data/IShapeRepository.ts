@@ -27,45 +27,47 @@ export interface IShapeRepository {
     update: (id: string, updates: Partial<ShapeData>) => Promise<void>
 
     /**
+     * 获取所有图形
+     */
+    getAll: () => Promise<ShapeData[]>
+
+    // ==================== 可选方法（未来扩展） ====================
+
+    /**
      * 删除图形
      * @param id 图形 ID
      */
-    delete: (id: string) => Promise<void>
+    delete?: (id: string) => Promise<void>
 
     /**
      * 批量删除图形
      * @param ids 图形 ID 列表
      */
-    deleteMany: (ids: string[]) => Promise<void>
+    deleteMany?: (ids: string[]) => Promise<void>
 
     /**
      * 获取单个图形
      * @param id 图形 ID
      */
-    get: (id: string) => Promise<ShapeData | null>
-
-    /**
-     * 获取所有图形
-     */
-    getAll: () => Promise<ShapeData[]>
+    get?: (id: string) => Promise<ShapeData | null>
 
     /**
      * 批量查询图形
      * @param ids 图形 ID 列表
      */
-    queryByIds: (ids: string[]) => Promise<ShapeData[]>
+    queryByIds?: (ids: string[]) => Promise<ShapeData[]>
 
     /**
-     * 订阅数据变化
+     * 订阅数据变化（用于协作/响应式更新）
      * @param callback 数据变化回调函数
      * @returns 取消订阅的函数
      */
-    subscribe: (callback: (shapes: ShapeData[]) => void) => () => void
+    subscribe?: (callback: (shapes: ShapeData[]) => void) => () => void
 
     /**
      * 清空所有图形
      */
-    clear: () => Promise<void>
+    clear?: () => Promise<void>
 
     // ==================== 协作功能（预留） ====================
 

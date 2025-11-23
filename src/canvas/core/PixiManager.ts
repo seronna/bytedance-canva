@@ -125,6 +125,33 @@ export class PixiManager {
     }
 
     /**
+     * 删除图形（从渲染和持久化层移除）
+     */
+    async deleteShape(id: string): Promise<void> {
+        const shape = this.shapes.get(id)
+        if (!shape) {
+            return
+        }
+
+        // 从容器移除
+        if (this.mainContainer) {
+            this.mainContainer.removeChild(shape.graphics)
+        }
+
+        // 销毁图形对象
+        shape.destroy()
+
+        // 从缓存移除
+        this.shapes.delete(id)
+
+        // 从持久化层删除
+        if (this.repository.delete) {
+            await this.repository.delete(id)
+        }
+        console.log(`[PixiManager] 删除图形: ${id}`)
+    }
+
+    /**
      * 根据数据创建渲染实例（用于恢复持久化数据）
      */
     private renderShape(data: ShapeData): void {
@@ -157,7 +184,6 @@ export class PixiManager {
     async loadShapes(): Promise<void> {
         const allShapes = await this.repository.getAll()
         allShapes.forEach(shapeData => this.renderShape(shapeData))
-        console.log(`[PixiManager] 加载了 ${allShapes.length} 个图形`)
     }
 
     /**
@@ -184,6 +210,10 @@ export class PixiManager {
         }
     }
 
+    /**
+     * 设置拖拽事件
+     * @param shape 图形对象
+     */
     private setupDragEvents(shape: ShapeBase): void {
         const graphics = shape.graphics
 
@@ -241,7 +271,6 @@ export class PixiManager {
             shape.setSelected(true)
         }
         this.notifySelectionChange()
-        console.log('[PixiManager] 选中图形:', id)
     }
 
     clearSelection(): void {
@@ -273,12 +302,15 @@ export class PixiManager {
         this.selectionListeners.forEach(listener => listener(ids))
     }
 
-    hitTest(screenX: number, screenY: number): string | null {
+    /**
+     * 获取指定屏幕坐标位置的图形 ID（从上到下查找）
+     */
+    getShapeAtPoint(screenX: number, screenY: number): string | null {
         const world = this.screenToWorld(screenX, screenY)
         const shapeArray = Array.from(this.shapes.values()).reverse()
 
         for (const shape of shapeArray) {
-            if (shape.hitTest(world.x, world.y)) {
+            if (shape.containsPoint(world.x, world.y)) {
                 return shape.id
             }
         }
