@@ -24,7 +24,7 @@ export type ToolName = 'select' | 'pan' | 'rect' | 'circle' | 'text' | 'image' |
  * @param ctrlKey Ctrl 键状态
  * @param altKey Alt 键状态
  * @param metaKey Meta 键状态
- * @param button 按钮编号（0：主按钮，1：中键，2：右键）    
+ * @param button 按钮编号（0：主按钮，1：中键，2：右键）
  */
 export interface PointerEvent {
     screenX: number
@@ -49,23 +49,23 @@ export interface ITool {
     readonly name: ToolName
 
     /** 工具激活时调用 */
-    activate(): void
+    activate: () => void
 
     /** 工具停用时调用 */
-    deactivate(): void
+    deactivate: () => void
 
     /** 鼠标/触摸按下 */
-    onPointerDown(e: PointerEvent): void
+    onPointerDown: (e: PointerEvent) => void
 
     /** 鼠标/触摸移动 */
-    onPointerMove(e: PointerEvent): void
+    onPointerMove: (e: PointerEvent) => void
 
     /** 鼠标/触摸松开 */
-    onPointerUp(e: PointerEvent): void
+    onPointerUp: (e: PointerEvent) => void
 
     /** 键盘按下（可选，用于快捷键） */
-    onKeyDown?(e: KeyboardEvent): void
+    onKeyDown?: (e: KeyboardEvent) => void
 
     /** 键盘松开（可选） */
-    onKeyUp?(e: KeyboardEvent): void
+    onKeyUp?: (e: KeyboardEvent) => void
 }

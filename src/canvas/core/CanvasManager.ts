@@ -33,7 +33,8 @@ export class CanvasManager {
      * 调整画布大小
      */
     resize(width: number, height: number): void {
-        if (!this.canvas) return
+        if (!this.canvas)
+            return
         this.canvas.width = width
         this.canvas.height = height
     }
@@ -49,7 +50,8 @@ export class CanvasManager {
      * 清空画布
      */
     clear(): void {
-        if (!this.ctx || !this.canvas) return
+        if (!this.ctx || !this.canvas)
+            return
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     }
 
@@ -57,7 +59,8 @@ export class CanvasManager {
      * 应用 Viewport transform 到 Canvas 上下文（在绘制前调用）
      */
     applyTransform(): void {
-        if (!this.ctx) return
+        if (!this.ctx)
+            return
         this.ctx.save()
         this.ctx.translate(this.currentViewport.x, this.currentViewport.y)
         this.ctx.scale(this.currentViewport.scale, this.currentViewport.scale)
@@ -67,7 +70,8 @@ export class CanvasManager {
      * 恢复 Canvas 上下文的 transform
      */
     restoreTransform(): void {
-        if (!this.ctx) return
+        if (!this.ctx)
+            return
         this.ctx.restore()
     }
 
@@ -82,7 +86,8 @@ export class CanvasManager {
      * 示例：绘制框选矩形（Rubber Band）
      */
     drawSelectionRect(x: number, y: number, width: number, height: number): void {
-        if (!this.ctx) return
+        if (!this.ctx)
+            return
 
         this.clear()
         this.applyTransform()

@@ -3,11 +3,11 @@
  * 职责：管理 Pixi Application、主场景容器、渲染循环、图形对象管理、拾取检测、拖拽
  */
 
-import { Application, Container } from 'pixi.js'
+import type { ShapeBase } from '../objects/ShapeBase'
 import type { ViewportState } from './Viewport'
-import { ShapeBase } from '../objects/ShapeBase'
-import { RectNode } from '../objects/RectNode'
+import { Application, Container } from 'pixi.js'
 import { CircleNode } from '../objects/CircleNode'
+import { RectNode } from '../objects/RectNode'
 
 export class PixiManager {
     private app: Application | null = null
@@ -36,7 +36,7 @@ export class PixiManager {
             canvas,
             width,
             height,
-            backgroundColor: 0xffffff,
+            backgroundColor: 0xFFFFFF,
             antialias: true,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
@@ -49,12 +49,14 @@ export class PixiManager {
     }
 
     resize(width: number, height: number): void {
-        if (!this.app) return
+        if (!this.app)
+            return
         this.app.renderer.resize(width, height)
     }
 
     syncViewport(state: ViewportState): void {
-        if (!this.mainContainer) return
+        if (!this.mainContainer)
+            return
         this.currentViewport = state
         this.mainContainer.position.set(state.x, state.y)
         this.mainContainer.scale.set(state.scale, state.scale)
@@ -73,7 +75,8 @@ export class PixiManager {
     }
 
     clear(): void {
-        if (!this.mainContainer) return
+        if (!this.mainContainer)
+            return
         this.mainContainer.removeChildren()
     }
 
@@ -91,7 +94,7 @@ export class PixiManager {
      */
     setInteractionEnabled(enabled: boolean): void {
         this.interactionEnabled = enabled
-        this.shapes.forEach(shape => {
+        this.shapes.forEach((shape) => {
             shape.graphics.eventMode = enabled ? 'static' : 'none'
             shape.graphics.cursor = enabled ? 'move' : 'default'
         })
@@ -109,7 +112,7 @@ export class PixiManager {
             height,
             color: style.fillColor,
             borderColor: style.strokeColor,
-            borderWidth: style.strokeWidth
+            borderWidth: style.strokeWidth,
         })
 
         this.shapes.set(id, rect)
@@ -132,7 +135,7 @@ export class PixiManager {
             radius,
             color: style.fillColor,
             borderColor: style.strokeColor,
-            borderWidth: style.strokeWidth
+            borderWidth: style.strokeWidth,
         })
 
         this.shapes.set(id, circle)
@@ -154,7 +157,8 @@ export class PixiManager {
 
         graphics.on('pointerdown', (event) => {
             // 如果交互被禁用,直接返回
-            if (!this.interactionEnabled) return
+            if (!this.interactionEnabled)
+                return
 
             this.selectShape(shape.id)
             this.draggingShape = shape
@@ -172,19 +176,22 @@ export class PixiManager {
         })
 
         graphics.on('pointerup', () => {
-            if (!this.interactionEnabled) return
+            if (!this.interactionEnabled)
+                return
             this.draggingShape = null
             graphics.cursor = 'move'
         })
 
         graphics.on('pointerupoutside', () => {
-            if (!this.interactionEnabled) return
+            if (!this.interactionEnabled)
+                return
             this.draggingShape = null
             graphics.cursor = 'move'
         })
 
         graphics.on('globalpointermove', (event) => {
-            if (!this.interactionEnabled) return
+            if (!this.interactionEnabled)
+                return
             if (this.draggingShape === shape) {
                 const pos = event.global
                 const worldX = (pos.x - this.currentViewport.x) / this.currentViewport.scale
@@ -192,7 +199,7 @@ export class PixiManager {
 
                 shape.setPosition(
                     worldX - this.dragOffset.x,
-                    worldY - this.dragOffset.y
+                    worldY - this.dragOffset.y,
                 )
 
                 // 通知选中监听器更新（包括选择框）
@@ -213,7 +220,7 @@ export class PixiManager {
     }
 
     clearSelection(): void {
-        this.selectedShapeIds.forEach(id => {
+        this.selectedShapeIds.forEach((id) => {
             const shape = this.shapes.get(id)
             if (shape) {
                 shape.setSelected(false)

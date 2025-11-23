@@ -3,13 +3,12 @@
  * 职责：统一管理 Pixi / Canvas / DOM 三层渲染，协调 Viewport 同步
  */
 
-import { PixiManager } from './PixiManager'
+import type { ViewportState } from './Viewport'
+import { CircleTool, PanTool, RectTool, SelectTool, ToolManager } from '@/canvas-tools'
 import { CanvasManager } from './CanvasManager'
 import { DOMManager } from './DOMManager'
+import { PixiManager } from './PixiManager'
 import { Viewport } from './Viewport'
-import type { ViewportState } from './Viewport'
-import { ToolManager, SelectTool, PanTool, RectTool, CircleTool } from '@/canvas-tools'
-
 
 export interface ShapeStyle {
     fillColor: number
@@ -25,9 +24,9 @@ export class RenderOrchestrator {
     private toolManager: ToolManager
 
     private currentShapeStyle: ShapeStyle = {
-        fillColor: 0x3b82f6,
+        fillColor: 0x3B82F6,
         strokeColor: 0x000000,
-        strokeWidth: 1
+        strokeWidth: 1,
     }
 
     constructor() {
@@ -60,7 +59,7 @@ export class RenderOrchestrator {
         canvas2D: HTMLCanvasElement,
         domOverlay: HTMLElement,
         width: number,
-        height: number
+        height: number,
     ): Promise<void> {
         // 初始化三层管理器
         await this.pixiManager.init(pixiCanvas, width, height)

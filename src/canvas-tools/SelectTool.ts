@@ -1,5 +1,5 @@
-import type { ITool, PointerEvent } from '../types/tool'
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
+import type { ITool, PointerEvent } from '../types/tool'
 
 /**
  * 选择工具
@@ -30,7 +30,8 @@ export class SelectTool implements ITool {
         const hitShapeId = pixiManager.hitTest(e.screenX, e.screenY, viewport)
         if (hitShapeId) {
             pixiManager.selectShape(hitShapeId)
-        } else {
+        }
+        else {
             pixiManager.clearSelection()
         }
     }

@@ -27,7 +27,8 @@ export class DOMManager {
      * 同步 viewport 变换（但不缩放 DOM，只平移）
      */
     syncViewport(state: ViewportState): void {
-        if (!this.container) return
+        if (!this.container)
+            return
 
         // 只平移，不缩放
         this.container.style.transform = `translate(${state.x}px, ${state.y}px)`
@@ -53,17 +54,20 @@ export class DOMManager {
     }
 
     appendChild(element: HTMLElement): void {
-        if (!this.container) return
+        if (!this.container)
+            return
         this.container.appendChild(element)
     }
 
     removeChild(element: HTMLElement): void {
-        if (!this.container) return
+        if (!this.container)
+            return
         this.container.removeChild(element)
     }
 
     clear(): void {
-        if (!this.container) return
+        if (!this.container)
+            return
         this.container.innerHTML = ''
     }
 

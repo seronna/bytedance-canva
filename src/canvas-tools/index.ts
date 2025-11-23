@@ -2,10 +2,10 @@
  * 工具系统导出索引
  */
 
-export { ToolManager } from './ToolManager'
-export { SelectTool } from './SelectTool'
+export type { ITool, PointerEvent, ToolName } from '../types/tool'
+export { CircleTool } from './CircleTool'
 export { PanTool } from './PanTool'
 export { RectTool } from './RectTool'
-export { CircleTool } from './CircleTool'
+export { SelectTool } from './SelectTool'
 
-export type { ITool, ToolName, PointerEvent } from '../types/tool'
+export { ToolManager } from './ToolManager'

@@ -1,5 +1,5 @@
-import type { ITool, PointerEvent } from '../types/tool'
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
+import type { ITool, PointerEvent } from '../types/tool'
 
 /**
  * 平移工具
@@ -33,7 +33,8 @@ export class PanTool implements ITool {
     }
 
     onPointerMove(e: PointerEvent): void {
-        if (!this.isPanning) return
+        if (!this.isPanning)
+            return
 
         const dx = e.clientX - this.lastX
         const dy = e.clientY - this.lastY

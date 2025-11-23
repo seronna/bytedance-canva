@@ -1,5 +1,5 @@
-import type { ITool, PointerEvent } from '../types/tool'
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
+import type { ITool, PointerEvent } from '../types/tool'
 
 /**
  * 矩形绘制工具
@@ -35,10 +35,12 @@ export class RectTool implements ITool {
     }
 
     onPointerMove(e: PointerEvent): void {
-        if (!this.isDrawing || !this.previewId) return
+        if (!this.isDrawing || !this.previewId)
+            return
 
         const shape = this.orchestrator.getPixiManager().getShape(this.previewId)
-        if (!shape) return
+        if (!shape)
+            return
 
         const width = Math.abs(e.worldX - this.startX)
         const height = Math.abs(e.worldY - this.startY)
@@ -46,7 +48,8 @@ export class RectTool implements ITool {
         const y = Math.min(e.worldY, this.startY)
 
         shape.setPosition(x, y)
-        if ('setSize' in shape) (shape as any).setSize(width, height)
+        if ('setSize' in shape)
+            (shape as any).setSize(width, height)
     }
 
     onPointerUp(): void {

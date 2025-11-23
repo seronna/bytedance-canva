@@ -1,5 +1,5 @@
-import type { ITool, PointerEvent } from '../types/tool'
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
+import type { ITool, PointerEvent } from '../types/tool'
 
 /**
  * 圆形绘制工具
@@ -35,16 +35,19 @@ export class CircleTool implements ITool {
     }
 
     onPointerMove(e: PointerEvent): void {
-        if (!this.isDrawing || !this.previewId) return
+        if (!this.isDrawing || !this.previewId)
+            return
 
         const shape = this.orchestrator.getPixiManager().getShape(this.previewId)
-        if (!shape) return
+        if (!shape)
+            return
 
         const dx = e.worldX - this.startX
         const dy = e.worldY - this.startY
         const radius = Math.sqrt(dx * dx + dy * dy)
 
-        if ('setRadius' in shape) (shape as any).setRadius(radius)
+        if ('setRadius' in shape)
+            (shape as any).setRadius(radius)
     }
 
     onPointerUp(): void {
