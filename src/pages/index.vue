@@ -3,7 +3,7 @@
     <AppSidebar />
     <SidebarInset class="overflow-x-hidden">
       <!-- 顶部工具栏 -->
-      <CanvasHeader v-model:current-tool="currentTool" />
+      <CanvasHeader />
 
       <!-- Main Content -->
       <div class="flex flex-1 flex-col gap-0 h-full overflow-hidden bg-gray-50 relative">
@@ -36,7 +36,6 @@
           <!-- 形状样式面板 -->
           <ShapeStylePanel
             v-if="showStylePanel"
-            :orchestrator="orchestrator!"
             class="border-l border-gray-200 bg-white z-10"
           />
         </div>
@@ -46,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { useEditorStore } from '@/stores/useEditorStore'
 import AppSidebar from '../components/AppSidebar.vue'
 import ShapeStylePanel from '../components/ShapeStylePanel.vue'
 import { SidebarInset, SidebarProvider } from '../components/ui/sidebar'
@@ -54,7 +54,7 @@ import { useCanvasEvents } from './composables/useCanvasEvents'
 import { useCanvasOrchestrator } from './composables/useCanvasOrchestrator'
 
 // -------------------- 状态管理 --------------------
-const currentTool = ref('select')
+const editorStore = useEditorStore()
 
 // -------------------- 组合式函数 --------------------
 const {
@@ -75,18 +75,23 @@ const {
 } = useCanvasEvents(getOrchestrator, containerRef)
 
 const showStylePanel = computed(() => {
-  return ['rect', 'circle'].includes(currentTool.value) && orchestrator.value
+  return ['rect', 'circle'].includes(editorStore.currentTool) && orchestrator.value
 })
 
-// -------------------- 工具切换逻辑 --------------------
-watch(currentTool, (newTool) => {
-  const orchestrator = getOrchestrator()
-  if (!orchestrator)
-    return
+// -------------------- 状态同步 --------------------
+// 监听 orchestrator 和工具状态
+watch([orchestrator, () => editorStore.currentTool], ([orch, newTool]) => {
+  if (orch) {
+    orch.getToolManager().setActiveTool(newTool as any)
+  }
+}, { immediate: true })
 
-  // 通过 ToolManager 切换工具（自动处理激活/停用）
-  orchestrator.getToolManager().setActiveTool(newTool as any)
-})
+// 监听样式变化（使用独立 watch 确保 deep 生效）
+watch(() => editorStore.shapeStyle, (style) => {
+  if (orchestrator.value) {
+    orchestrator.value.setShapeStyle(style)
+  }
+}, { deep: true, immediate: true })
 </script>
 
 <style scoped>
