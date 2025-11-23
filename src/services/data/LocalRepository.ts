@@ -81,16 +81,6 @@ export class LocalRepository implements IShapeRepository {
         return id
     }
 
-    /**
-     * 使用指定 ID 创建图形（用于已有 ID 的图形）
-     */
-    async createWithId(shape: ShapeData): Promise<void> {
-        this.updateAndPersist({
-            ...this.shapes.value,
-            [shape.id]: shape,
-        })
-    }
-
     async update(id: string, updates: Partial<ShapeData>): Promise<void> {
         const shape = this.shapes.value[id]
         if (!shape) {
@@ -147,19 +137,10 @@ export class LocalRepository implements IShapeRepository {
         this.updateAndPersist({})
     }
 
-    // ==================== 访问器（供 Store 使用）====================
-
-    /**
-     * 获取响应式的 shapes 对象
-     */
-    getShapesRef() {
-        return this.shapes
-    }
-
     /**
      * 生成新的图形 ID
      */
-    generateId(): string {
+    private generateId(): string {
         return nanoid()
     }
 }

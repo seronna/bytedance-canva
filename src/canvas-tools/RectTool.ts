@@ -1,59 +1,40 @@
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
-import type { ITool, PointerEvent } from '../types/tool'
+import type { RectNode } from '../canvas/objects/RectNode'
+import type { ShapeBase } from '../canvas/objects/ShapeBase'
+import type { PointerEvent } from '../types/tool'
+import { DrawingTool } from './base/DrawingTool'
 
 /**
  * 矩形绘制工具
  */
-export class RectTool implements ITool {
+export class RectTool extends DrawingTool {
     readonly name = 'rect' as const
 
-    private orchestrator: RenderOrchestrator
-    private isDrawing = false
-    private startX = 0
-    private startY = 0
-    private previewId: string | null = null
-
     constructor(orchestrator: RenderOrchestrator) {
-        this.orchestrator = orchestrator
+        super(orchestrator)
     }
 
-    activate(): void {
-        this.orchestrator.getPixiManager().setInteractionEnabled(false)
-    }
-
-    deactivate(): void {
-        this.isDrawing = false
-        this.previewId = null
-    }
-
-    onPointerDown(e: PointerEvent): void {
-        this.isDrawing = true
-        this.startX = e.worldX
-        this.startY = e.worldY
+    protected override async createPreview(e: PointerEvent): Promise<string> {
         const style = this.orchestrator.getShapeStyle()
-        this.previewId = this.orchestrator.getPixiManager().addRect(e.worldX, e.worldY, 1, 1, style)
+        return await this.pixiManager.addShape({
+            type: 'rect',
+            x: e.worldX,
+            y: e.worldY,
+            width: 1,
+            height: 1,
+            color: style.fillColor,
+            borderColor: style.strokeColor,
+            borderWidth: style.strokeWidth,
+        })
     }
 
-    onPointerMove(e: PointerEvent): void {
-        if (!this.isDrawing || !this.previewId)
-            return
-
-        const shape = this.orchestrator.getPixiManager().getShape(this.previewId)
-        if (!shape)
-            return
-
+    protected override updatePreview(shape: ShapeBase, e: PointerEvent): void {
         const width = Math.abs(e.worldX - this.startX)
         const height = Math.abs(e.worldY - this.startY)
         const x = Math.min(e.worldX, this.startX)
         const y = Math.min(e.worldY, this.startY)
 
         shape.setPosition(x, y)
-        if ('setSize' in shape)
-            (shape as any).setSize(width, height)
-    }
-
-    onPointerUp(): void {
-        this.isDrawing = false
-        this.previewId = null
+            ; (shape as RectNode).setSize(width, height)
     }
 }

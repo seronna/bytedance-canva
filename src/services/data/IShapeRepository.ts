@@ -8,8 +8,8 @@ import type { ShapeData } from '@/canvas/objects/ShapeBase'
 /**
  * 图形数据仓库接口
  *
- * 当前实现：LocalRepository（基于 Pinia + localStorage）
- * 未来扩展：CRDTRepository（基于 Yjs + WebSocket + EventStore）
+ * 当前实现：LocalRepository（localStorage）
+ * 未来扩展：CRDTRepository（基于 Yjs + WebSocket + EventStore?）
  */
 export interface IShapeRepository {
     /**
@@ -66,6 +66,25 @@ export interface IShapeRepository {
      * 清空所有图形
      */
     clear: () => Promise<void>
+
+    // ==================== 协作功能（预留） ====================
+
+    /**
+     * 连接到协作服务器（CRDT 实现时需要）
+     * @param roomId 房间 ID
+     * @param userId 用户 ID
+     */
+    connect?: (roomId: string, userId: string) => Promise<void>
+
+    /**
+     * 断开协作连接
+     */
+    disconnect?: () => void
+
+    /**
+     * 获取在线用户列表（协作功能）
+     */
+    getOnlineUsers?: () => Array<{ id: string, name: string, color: string }>
 }
 
 /**

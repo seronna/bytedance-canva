@@ -15,16 +15,19 @@ export function useCanvasOrchestrator() {
     let orchestrator: RenderOrchestrator | null = null
 
     const handleResize = () => {
-        if (!containerRef.value || !orchestrator) return
+        if (!containerRef.value || !orchestrator)
+            return
         const rect = containerRef.value.getBoundingClientRect()
-        if (rect.width < 10 || rect.height < 10) return
+        if (rect.width < 10 || rect.height < 10)
+            return
         orchestrator.resize(rect.width, rect.height)
     }
 
     let resizeObserver: ResizeObserver | null = null
 
     onMounted(async () => {
-        if (!pixiCanvasRef.value || !canvas2DRef.value || !domOverlayRef.value || !containerRef.value) return
+        if (!pixiCanvasRef.value || !canvas2DRef.value || !domOverlayRef.value || !containerRef.value)
+            return
 
         const rect = containerRef.value.getBoundingClientRect()
         orchestrator = new RenderOrchestrator()
@@ -34,13 +37,12 @@ export function useCanvasOrchestrator() {
             canvas2DRef.value,
             domOverlayRef.value,
             rect.width,
-            rect.height
+            rect.height,
         )
 
-        // Initial demo shapes
-        // const pixiManager = orchestrator.getPixiManager()
-        // pixiManager.addRect(100, 100, 200, 150, 0x3b82f6)
-        // pixiManager.addCircle(400, 150, 80, 0xef4444)
+        // 加载持久化的图形数据
+        const pixiManager = orchestrator.getPixiManager()
+        await pixiManager.loadShapes()
 
         orchestrator.getViewport().onChange((state) => {
             zoomLevel.value = Math.round(state.scale * 100)
@@ -53,7 +55,6 @@ export function useCanvasOrchestrator() {
         })
         resizeObserver.observe(containerRef.value)
 
-        //isReady.value = true
     })
 
     onUnmounted(() => {
@@ -69,6 +70,6 @@ export function useCanvasOrchestrator() {
         containerRef,
         zoomLevel,
         getOrchestrator: () => orchestrator,
-        orchestrator: orchestratorInstance
+        orchestrator: orchestratorInstance,
     }
 }

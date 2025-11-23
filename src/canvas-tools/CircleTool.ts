@@ -1,57 +1,36 @@
 import type { RenderOrchestrator } from '../canvas/core/RenderOrchestrator'
-import type { ITool, PointerEvent } from '../types/tool'
+import type { CircleNode } from '../canvas/objects/CircleNode'
+import type { ShapeBase } from '../canvas/objects/ShapeBase'
+import type { PointerEvent } from '../types/tool'
+import { DrawingTool } from './base/DrawingTool'
 
 /**
  * 圆形绘制工具
  */
-export class CircleTool implements ITool {
+export class CircleTool extends DrawingTool {
     readonly name = 'circle' as const
 
-    private orchestrator: RenderOrchestrator
-    private isDrawing = false
-    private startX = 0
-    private startY = 0
-    private previewId: string | null = null
-
     constructor(orchestrator: RenderOrchestrator) {
-        this.orchestrator = orchestrator
+        super(orchestrator)
     }
 
-    activate(): void {
-        this.orchestrator.getPixiManager().setInteractionEnabled(false)
-    }
-
-    deactivate(): void {
-        this.isDrawing = false
-        this.previewId = null
-    }
-
-    onPointerDown(e: PointerEvent): void {
-        this.isDrawing = true
-        this.startX = e.worldX
-        this.startY = e.worldY
+    protected override async createPreview(e: PointerEvent): Promise<string> {
         const style = this.orchestrator.getShapeStyle()
-        this.previewId = this.orchestrator.getPixiManager().addCircle(e.worldX, e.worldY, 1, style)
+        return await this.pixiManager.addShape({
+            type: 'circle',
+            x: e.worldX,
+            y: e.worldY,
+            radius: 1,
+            color: style.fillColor,
+            borderColor: style.strokeColor,
+            borderWidth: style.strokeWidth,
+        })
     }
 
-    onPointerMove(e: PointerEvent): void {
-        if (!this.isDrawing || !this.previewId)
-            return
-
-        const shape = this.orchestrator.getPixiManager().getShape(this.previewId)
-        if (!shape)
-            return
-
+    protected override updatePreview(shape: ShapeBase, e: PointerEvent): void {
         const dx = e.worldX - this.startX
         const dy = e.worldY - this.startY
         const radius = Math.sqrt(dx * dx + dy * dy)
-
-        if ('setRadius' in shape)
-            (shape as any).setRadius(radius)
-    }
-
-    onPointerUp(): void {
-        this.isDrawing = false
-        this.previewId = null
+            ; (shape as CircleNode).setRadius(radius)
     }
 }

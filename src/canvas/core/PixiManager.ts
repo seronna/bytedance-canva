@@ -3,19 +3,22 @@
  * 职责：管理 Pixi Application、主场景容器、渲染循环、图形对象管理、拾取检测、拖拽
  */
 
-import type { ShapeBase } from '../objects/ShapeBase'
+import type { ShapeBase, ShapeData } from '../objects/ShapeBase'
 import type { ViewportState } from './Viewport'
+import type { IShapeRepository } from '@/services/data/IShapeRepository'
 import { Application, Container } from 'pixi.js'
+import { LocalRepository } from '@/services/data/LocalRepository'
 import { CircleNode } from '../objects/CircleNode'
 import { RectNode } from '../objects/RectNode'
 
 export class PixiManager {
     private app: Application | null = null
     private mainContainer: Container | null = null
+    private repository: IShapeRepository
 
+    // 渲染缓存（仅用于渲染，数据持久化由 repository 负责）
     private shapes: Map<string, ShapeBase> = new Map()
     private selectedShapeIds: Set<string> = new Set()
-    private nextShapeId = 1
 
     private draggingShape: ShapeBase | null = null
     private dragOffset = { x: 0, y: 0 }
@@ -26,6 +29,11 @@ export class PixiManager {
 
     // 选中变化监听器
     private selectionListeners: Array<(selectedIds: string[]) => void> = []
+
+    constructor(repository?: IShapeRepository) {
+        // 默认使用 LocalRepository，但支持注入自定义实现（如 CRDTRepository）
+        this.repository = repository || new LocalRepository()
+    }
 
     /**
      * 初始化 Pixi Application
@@ -71,7 +79,7 @@ export class PixiManager {
     }
 
     getShape(id: string): ShapeBase | null {
-        return this.shapes.get(id) || null
+        return this.shapes.get(id) ?? null
     }
 
     clear(): void {
@@ -101,51 +109,79 @@ export class PixiManager {
         console.log(`[PixiManager] 图形交互 ${enabled ? '启用' : '禁用'}`)
     }
 
-    addRect(x: number, y: number, width: number, height: number, style: { fillColor: number, strokeColor: number, strokeWidth: number }): string {
-        const id = `shape_${this.nextShapeId++}`
-        const rect = new RectNode({
-            id,
-            type: 'rect',
-            x,
-            y,
-            width,
-            height,
-            color: style.fillColor,
-            borderColor: style.strokeColor,
-            borderWidth: style.strokeWidth,
-        })
+    /**
+     * 通用的添加图形方法
+     * @param shapeData 图形数据（不包含 id，由 repository 生成）
+     * @returns 返回创建的图形 ID
+     */
+    async addShape(shapeData: Omit<ShapeData, 'id'>): Promise<string> {
+        // 创建数据并保存到 repository
+        const id = await this.repository.create(shapeData)
 
-        this.shapes.set(id, rect)
+        // 直接渲染（repository.create 已经有完整数据）
+        this.renderShape({ ...shapeData, id } as ShapeData)
 
-        if (this.mainContainer) {
-            this.mainContainer.addChild(rect.graphics)
-        }
-
-        this.setupDragEvents(rect)
         return id
     }
 
-    addCircle(x: number, y: number, radius: number, style: { fillColor: number, strokeColor: number, strokeWidth: number }): string {
-        const id = `shape_${this.nextShapeId++}`
-        const circle = new CircleNode({
-            id,
-            type: 'circle',
-            x,
-            y,
-            radius,
-            color: style.fillColor,
-            borderColor: style.strokeColor,
-            borderWidth: style.strokeWidth,
-        })
+    /**
+     * 根据数据创建渲染实例（用于恢复持久化数据）
+     */
+    private renderShape(data: ShapeData): void {
+        let shape: ShapeBase
 
-        this.shapes.set(id, circle)
-
-        if (this.mainContainer) {
-            this.mainContainer.addChild(circle.graphics)
+        switch (data.type) {
+            case 'rect':
+                shape = new RectNode(data)
+                break
+            case 'circle':
+                shape = new CircleNode(data)
+                break
+            default:
+                console.error(`[PixiManager] 不支持的图形类型: ${data.type}`)
+                return
         }
 
-        this.setupDragEvents(circle)
-        return id
+        this.shapes.set(data.id, shape)
+
+        if (this.mainContainer) {
+            this.mainContainer.addChild(shape.graphics)
+        }
+
+        this.setupDragEvents(shape)
+    }
+
+    /**
+     * 从 repository 加载所有图形并渲染
+     */
+    async loadShapes(): Promise<void> {
+        const allShapes = await this.repository.getAll()
+        allShapes.forEach(shapeData => this.renderShape(shapeData))
+        console.log(`[PixiManager] 加载了 ${allShapes.length} 个图形`)
+    }
+
+    /**
+     * 更新图形数据到 repository（同步渲染对象的数据到持久化层）
+     */
+    async updateShapeData(id: string): Promise<void> {
+        const shape = this.shapes.get(id)
+        if (!shape) {
+            console.warn(`[PixiManager] 图形不存在: ${id}`)
+            return
+        }
+
+        const currentData = shape.getData()
+        await this.repository.update(id, currentData)
+    }
+
+    /**
+     * 屏幕坐标转世界坐标
+     */
+    private screenToWorld(screenX: number, screenY: number): { x: number, y: number } {
+        return {
+            x: (screenX - this.currentViewport.x) / this.currentViewport.scale,
+            y: (screenY - this.currentViewport.y) / this.currentViewport.scale,
+        }
     }
 
     private setupDragEvents(shape: ShapeBase): void {
@@ -156,55 +192,44 @@ export class PixiManager {
         graphics.cursor = this.interactionEnabled ? 'move' : 'default'
 
         graphics.on('pointerdown', (event) => {
-            // 如果交互被禁用,直接返回
             if (!this.interactionEnabled)
                 return
 
             this.selectShape(shape.id)
             this.draggingShape = shape
-            const pos = event.global
 
-            const worldX = (pos.x - this.currentViewport.x) / this.currentViewport.scale
-            const worldY = (pos.y - this.currentViewport.y) / this.currentViewport.scale
+            const world = this.screenToWorld(event.global.x, event.global.y)
             const shapePos = shape.getPosition()
-
-            this.dragOffset.x = worldX - shapePos.x
-            this.dragOffset.y = worldY - shapePos.y
+            this.dragOffset.x = world.x - shapePos.x
+            this.dragOffset.y = world.y - shapePos.y
 
             graphics.cursor = 'grabbing'
             event.stopPropagation()
         })
 
-        graphics.on('pointerup', () => {
-            if (!this.interactionEnabled)
-                return
-            this.draggingShape = null
-            graphics.cursor = 'move'
-        })
-
-        graphics.on('pointerupoutside', () => {
-            if (!this.interactionEnabled)
-                return
-            this.draggingShape = null
-            graphics.cursor = 'move'
-        })
-
-        graphics.on('globalpointermove', (event) => {
+        // 拖拽结束处理（合并 pointerup 和 pointerupoutside）
+        const handleDragEnd = async () => {
             if (!this.interactionEnabled)
                 return
             if (this.draggingShape === shape) {
-                const pos = event.global
-                const worldX = (pos.x - this.currentViewport.x) / this.currentViewport.scale
-                const worldY = (pos.y - this.currentViewport.y) / this.currentViewport.scale
-
-                shape.setPosition(
-                    worldX - this.dragOffset.x,
-                    worldY - this.dragOffset.y,
-                )
-
-                // 通知选中监听器更新（包括选择框）
-                this.notifySelectionChange()
+                await this.updateShapeData(shape.id)
             }
+            this.draggingShape = null
+            graphics.cursor = 'move'
+        }
+        graphics.on('pointerup', handleDragEnd)
+        graphics.on('pointerupoutside', handleDragEnd)
+
+        graphics.on('globalpointermove', (event) => {
+            if (!this.interactionEnabled || this.draggingShape !== shape)
+                return
+
+            const world = this.screenToWorld(event.global.x, event.global.y)
+            shape.setPosition(
+                world.x - this.dragOffset.x,
+                world.y - this.dragOffset.y,
+            )
+            this.notifySelectionChange()
         })
     }
 
@@ -248,14 +273,12 @@ export class PixiManager {
         this.selectionListeners.forEach(listener => listener(ids))
     }
 
-    hitTest(screenX: number, screenY: number, viewport: ViewportState): string | null {
-        const worldX = (screenX - viewport.x) / viewport.scale
-        const worldY = (screenY - viewport.y) / viewport.scale
-
+    hitTest(screenX: number, screenY: number): string | null {
+        const world = this.screenToWorld(screenX, screenY)
         const shapeArray = Array.from(this.shapes.values()).reverse()
 
         for (const shape of shapeArray) {
-            if (shape.hitTest(worldX, worldY)) {
+            if (shape.hitTest(world.x, world.y)) {
                 return shape.id
             }
         }
