@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import TestElementStore from './views/TestElementStore.vue';
 </script>
 
 <template>
-<h1>Canva Vue</h1>
+  <TestElementStore />
 </template>
 
 <style scoped>
